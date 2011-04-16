@@ -228,10 +228,10 @@ def zero_forcing_set_wavefront(matrix):
                     	found_optimal_set = true
                         # We found a zero forcing set that fills the graph
                         
-						#Place it into the set of optimal zero forcing sets if it is not already there
-						if closure_to_add_initial_Bitset not in optimal_sets:
-							optimal_sets[closure_to_add_initial_Bitset] = num_of_optimal_sets
-							num_of_optimal_sets = num_of_optimal_sets + 1
+			#Place it into the set of optimal zero forcing sets if it is not already there
+			if closure_to_add_initial_Bitset not in optimal_sets:
+				optimal_sets[closure_to_add_initial_Bitset] = num_of_optimal_sets
+				num_of_optimal_sets = num_of_optimal_sets + 1
 
 
                     if closure_to_add_unfilled_Bitset not in closures:
