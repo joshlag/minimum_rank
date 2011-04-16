@@ -149,12 +149,12 @@ def zero_forcing_set_wavefront(matrix):
     	if found_optimal_set:
     		#return the set of all optimal zero forcing sets
     		for zero_forcing_set,garbage in optimal_sets.items():
-				v = bitset_first(zero_forcing_set)
-			    #print "done"
-			    while v>=0:
-			        zero_forcing_vertices.append(v)
-			        v = bitset_next(zero_forcing_set, v+1)
-			    zero_forcing_sets.append(zero_forcing_vertices)
+                v = bitset_first(zero_forcing_set)
+                #print "done"
+                while v>=0:
+                    zero_forcing_vertices.append(v)
+                    v = bitset_next(zero_forcing_set, v+1)
+                zero_forcing_sets.append(zero_forcing_vertices)
             # Free all my memory
             for i in range(num_vertices):
                 bitset_free(&neighbors_set[i])
