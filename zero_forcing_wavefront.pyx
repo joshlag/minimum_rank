@@ -96,15 +96,22 @@ def zero_forcing_set_wavefront(matrix):
     """
     if isinstance(matrix, Graph):
         matrix = matrix.adjacency_matrix()
-    cdef int n, i, j, v, budget, can_afford
+    cdef int n, i, j, v, budget, can_afford, num_of_optimal_sets
+    cdef bool found_optimal_set = false
     cdef int num_vertices = matrix.nrows()
     cdef list zero_forcing_vertices = []
+    cdef list zero_forcing_sets = []
     cdef bitset_t unfilled_neighbors
     cdef bitset_s *initial_set, *unfilled_set, *closure_to_add_unfilled, *closure_to_add_initial
     cdef bitset_s *neighbors
     
     # closures is a dictionary mapping closures (unfilled sets) to the initial zfs sets
     closures = dict()
+    
+    #optimal_sets is a dictionary mapping each optimal zero forcing set to a distinct integer
+    optimal_sets = dict()
+    num_of_optimal_sets = 0
+    #WARNING: If the number of optimal sets gets too large, then num_of_optimal_sets may overflow
     
     cdef bitset_s *neighbors_set = <bitset_s *> sage_malloc(num_vertices*sizeof(bitset_s))
 
@@ -136,6 +143,26 @@ def zero_forcing_set_wavefront(matrix):
 
     # We have to fill at least one vertex to start, so budget >= 1
     for budget in range(minimum_degree,num_vertices+1):
+    
+    	#Check to see if we have found an optimal zero forcing set already.
+    	#If we have, then return all the optimal zero forcing sets
+    	if found_optimal_set:
+    		#return the set of all optimal zero forcing sets
+    		for zero_forcing_set,garbage in optimal_sets.items():
+				v = bitset_first(zero_forcing_set)
+			    #print "done"
+			    while v>=0:
+			        zero_forcing_vertices.append(v)
+			        v = bitset_next(zero_forcing_set, v+1)
+			    zero_forcing_sets.append(zero_forcing_vertices)
+            # Free all my memory
+            for i in range(num_vertices):
+                bitset_free(&neighbors_set[i])
+            sage_free(neighbors_set)
+
+            bitset_free(unfilled_neighbors)
+            return len(zero_forcing_vertices), zero_forcing_sets,num_of_optimal_sets, len(closures)
+                		
         #print "current budget: ", budget, " Current closures: ", len(closures)
         for unfilled_Bitset, initial_Bitset in closures.items():
             initial_set = initial_Bitset._bitset
@@ -198,20 +225,14 @@ def zero_forcing_set_wavefront(matrix):
                     #print "  new initial zfs set: ", bitset_string(closure_to_add_initial)
 
                     if (bitset_isempty(closure_to_add_unfilled)):
+                    	found_optimal_set = true
                         # We found a zero forcing set that fills the graph
-                        v = bitset_first(closure_to_add_initial)
-                        #print "done"
-                        while v>=0:
-                            zero_forcing_vertices.append(v)
-                            v = bitset_next(closure_to_add_initial, v+1)
+                        
+						#Place it into the set of optimal zero forcing sets if it is not already there
+						if closure_to_add_initial_Bitset not in optimal_sets:
+							optimal_sets[closure_to_add_initial_Bitset] = num_of_optimal_sets
+							num_of_optimal_sets = num_of_optimal_sets + 1
 
-                        # Free all my memory
-                        for i in range(num_vertices):
-                            bitset_free(&neighbors_set[i])
-                        sage_free(neighbors_set)
-
-                        bitset_free(unfilled_neighbors)
-                        return len(zero_forcing_vertices), zero_forcing_vertices, len(closures)
 
                     if closure_to_add_unfilled_Bitset not in closures:
                         closures[closure_to_add_unfilled_Bitset] = closure_to_add_initial_Bitset
